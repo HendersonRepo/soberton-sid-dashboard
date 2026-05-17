@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+inputs/unknownsite_*.csv
+inputs/minmaxavg_unknown*.csv
+inputs/minmaxavg_unknownsite*.csv
+inputs/14thJuly2025.csv
+make_report.py
+diagnose_memory_dumps.py
+SID_Data_Recording_Issue.docx
