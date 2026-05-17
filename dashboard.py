@@ -228,7 +228,7 @@ tab_analysis, tab_timeline, tab_stats, tab_appendix = st.tabs(
 with tab_analysis:
 
     st.info(
-        "**Data quality note:** three deployment-period location corrections were applied "
+        "**Data quality note:** five deployment-period location corrections were applied "
         "to the source data following speed-profile analysis. See the "
         "**Technical Appendix** tab → *Data Corrections* for full details."
     )
@@ -325,8 +325,8 @@ with tab_analysis:
     st.caption(
         "All four sites show the same directional pattern: visible speeds (red) are lower "
         "than not-visible speeds (blue) throughout. The effect is largest at Site 3 "
-        "(Station Road, Brockbridge), where the median difference is +1.7 mph, and smallest "
-        "at Site 2 (Church Road, Newtown, 2 of 2) at +1.1 mph. "
+        "(Station Road, Brockbridge), where the median difference is +1.8 mph, and smallest "
+        "at Sites 1 and 2 (Church Road, Newtown) at +1.4 mph each. "
         "Sites 3 and 4 show speeds generally at or below the 30 mph limit, while "
         "Sites 1 and 2 (Church Road, Newtown) have higher baseline speeds."
     )
@@ -686,7 +686,7 @@ All statistical tests are two-sided. Significance threshold: *p* < 0.05.
     # ── Data corrections ─────────────────────────────────────────────────────
     st.subheader("Data Corrections")
     st.markdown("""
-Three deployment periods were found to carry incorrect site labels in the SpeedViewer
+Five deployment periods were found to carry incorrect site labels in the SpeedViewer
 software. In each case the device was downloaded and the file named after the site where
 the operator was standing at the time of download, but the speed data inside reflected a
 different location. Corrections were identified by comparing the speed distribution of
@@ -716,9 +716,9 @@ consistent with the device not having moved between those campaigns.
 *Corrected to:* Site 3 — Station Rd, Brockbridge
 
 Average speed medians of Dir 1: 23.2 mph, Dir 2: 25.3 mph matched Station Rd, not
-Church Rd. The next confirmed Church Rd deployment (P10, 15–28 Feb 2026) recorded
-Dir 1: 28.0 mph — a 4.8 mph difference in the same direction at the same nominal site
-just 17 days later, which is not credible as seasonal or traffic variation.
+Church Rd. The next corrected Church Rd deployment (P10, 15–28 Feb 2026 — see Correction 5)
+recorded Dir 1: 28.0 mph — a 4.8 mph difference in the same direction at the same nominal
+site just 17 days later, which is not credible as seasonal or traffic variation.
 
 ---
 
@@ -735,4 +735,31 @@ intervals recorded a maximum speed above 50 mph and 0.3% above 60 mph, compared 
 for all other Station Rd periods and ~3% / 0.5% for Church Rd periods. KS statistic and
 MAE comparisons of the upper tail placed P7 closest to Site 2. Per-direction analysis
 also favoured Site 2 (Dir 2 KS = 0.288 vs Site 1 Dir 2 KS = 0.342).
+
+---
+
+**Correction 4 — Period P3 (3 Sep – 18 Sep 2025)**
+
+*Original label:* Site 2 — Church Rd, Newtown (2 of 2)
+*Corrected to:* Site 1 — Church Rd, Newtown (1 of 2)
+
+This correction was identified from the deployment timeline: during P3 no other site has
+data simultaneously, indicating both devices were on Church Road (Sites 1 and 2) at the
+same time and P3 data was mis-tagged to the wrong sensor. Speed-profile comparison
+confirmed the relabelling: P3 has a KS statistic of 0.030 and MAE of 0.11 mph against
+Site 1's reference distribution — essentially indistinguishable — while the same
+comparison against Site 2 gives KS = 0.251 / MAE = 1.56 mph.
+
+---
+
+**Correction 5 — Period P10 (15 Feb – 28 Feb 2026)**
+
+*Original label:* Site 2 — Church Rd, Newtown (2 of 2)
+*Corrected to:* Site 1 — Church Rd, Newtown (1 of 2)
+
+Identified by the same deployment-timeline pattern as Correction 4: P10 is an isolated
+block with no simultaneous activity at any other site, indicating both Church Road devices
+were active but data was attributed to the wrong one. Speed-profile comparison: KS = 0.123,
+MAE = 0.65 mph against Site 1 (KS = 0.327 / MAE = 2.09 mph against Site 2; KS > 0.67
+against Sites 3 and 4), placing P10 unambiguously at Site 1.
     """)
