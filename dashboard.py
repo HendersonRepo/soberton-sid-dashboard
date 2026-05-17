@@ -426,10 +426,8 @@ with tab_analysis:
     # ── Section 6: Maximum speed time series ────────────────────────────────
     st.header("6. Maximum Speed Over Time")
     st.caption(
-        "Per site: each point is the maximum speed recorded in a 30-minute interval. "
-        "Solid lines show the 7-day rolling median. "
-        "Red = SID visible (approaching); Blue = SID not visible (departing); "
-        "Green dashed = 30 mph limit."
+        "Per site: highest speed recorded by either direction in each rolling 1-hour window. "
+        "Line breaks indicate gaps between deployments. Green dashed = 30 mph limit."
     )
 
     fig6 = make_subplots(
@@ -440,46 +438,38 @@ with tab_analysis:
 
     for row, site in enumerate(selected_sites, start=1):
         ds = d[d["Location"] == site].sort_values("Date")
-        for direction, colour, label in [
-            (1, COLOUR_VISIBLE, "Max speed visible – approach from front"),
-            (2, COLOUR_NOT_VISIBLE, "Max speed not visible – approach from rear"),
-        ]:
-            ds_dir = (
-                ds[ds["Direction"] == direction]
-                .set_index("Date")["Maximum speed"]
-                .dropna()
-                .sort_index()
-            )
-            rolling = ds_dir.rolling("7D").median()
-            fig6.add_trace(go.Scatter(
-                x=ds_dir.index, y=ds_dir.values,
-                mode="markers", marker=dict(color=colour, size=2, opacity=0.2),
-                name=label, legendgroup=label, showlegend=(row == 1),
-            ), row=row, col=1)
-            fig6.add_trace(go.Scatter(
-                x=rolling.index, y=rolling.values,
-                mode="lines", line=dict(color=colour, width=2),
-                legendgroup=label, showlegend=False,
-            ), row=row, col=1)
+        # Combine directions: max speed at each timestamp across both directions
+        site_max = ds.groupby("Date")["Maximum speed"].max().sort_index()
+        # Rolling 1-hour maximum
+        rolling = site_max.rolling("1h", min_periods=1).max()
+        # Reindex to a uniform 30-min grid so deployment gaps become NaN (line breaks)
+        idx = pd.date_range(rolling.index.min().floor("30min"),
+                            rolling.index.max().ceil("30min"), freq="30min")
+        rolling = rolling.reindex(idx)
+        fig6.add_trace(go.Scatter(
+            x=rolling.index, y=rolling.values,
+            mode="lines",
+            line=dict(color=COLOUR_DIFF, width=1.5),
+            name="Rolling 1-hr max speed", showlegend=(row == 1),
+        ), row=row, col=1)
         fig6.add_hline(
             y=SPEED_LIMIT, line=dict(color="green", dash="dash", width=1),
             row=row, col=1,
         )
 
     fig6.update_layout(
-        height=300 * n_sites,
+        height=280 * n_sites,
+        showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.01),
         margin=dict(t=60),
     )
     fig6.update_yaxes(title_text="Max speed (mph)")
     st.plotly_chart(fig6, use_container_width=True)
     st.caption(
-        "Individual 30-minute maximum speeds are noisy — a single fast vehicle can set the "
-        "reading for a whole half-hour. The rolling median lines cut through that noise to "
-        "show the underlying trend. At all sites the not-visible direction (blue) sits "
-        "persistently above the visible direction (red), consistent with the SID reducing "
-        "peak speeds as well as average speeds. Periods where both lines rise or fall "
-        "together reflect changes in background traffic rather than a change in SID effect."
+        "Each point shows the highest speed recorded by any vehicle across both directions "
+        "in the previous hour. Line breaks are periods when the SID was not deployed at "
+        "this site. Spikes above the line reflect individual fast vehicles; the baseline "
+        "level shows the typical worst-case speed at each location."
     )
 
 
