@@ -20,7 +20,7 @@ st.set_page_config(
     layout="wide",
 )
 
-CAMPAIGN_END = pd.Timestamp("2025-08-07")
+CAMPAIGN_END = pd.Timestamp("2026-03-14")
 
 MASTER_CSV = str(Path(__file__).parent / "inputs" / "master.csv")
 SPEED_LIMIT = 30
