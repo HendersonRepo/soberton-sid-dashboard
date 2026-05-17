@@ -446,8 +446,8 @@ with tab_analysis:
         daily_max = daily_max.reindex(idx)
         fig6.add_trace(go.Scatter(
             x=daily_max.index, y=daily_max.values,
-            mode="lines",
-            line=dict(color=COLOUR_DIFF, width=1.5),
+            mode="markers",
+            marker=dict(color=COLOUR_DIFF, size=5, symbol="circle"),
             name="Daily max speed", showlegend=(row == 1),
         ), row=row, col=1)
         fig6.add_hline(
