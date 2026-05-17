@@ -255,7 +255,7 @@ with tab_analysis:
         "series throughout the campaign, suggesting a persistent speed-reducing effect when "
         "drivers can see the SID. "
         "Across all sites and dates, the median average speed when the SID is visible is "
-        "25.0 mph, compared to 26.5 mph when not visible — a difference of 1.5 mph. "
+        "25.3 mph, compared to 26.7 mph when not visible — a difference of 1.4 mph. "
         "Gaps in the series reflect periods between site deployments."
     )
 
@@ -278,9 +278,9 @@ with tab_analysis:
     st.caption(
         "Points above the zero line indicate 30-minute intervals where drivers travelling "
         "away from the SID (not visible) were faster than those approaching it (visible). "
-        "Across the full campaign, 71% of paired intervals show a positive difference, "
-        "with a median of +1.41 mph — consistent with the SID causing drivers to slow down "
-        "when they can see it. The effect is present throughout the campaign period with no "
+        "Across all deployments, 71% of paired intervals show a positive difference, "
+        "with a median of +1.37 mph — consistent with the SID causing drivers to slow down "
+        "when they can see it. The effect is present throughout all deployment periods with no "
         "clear seasonal trend."
     )
 
@@ -319,8 +319,8 @@ with tab_analysis:
     st.caption(
         "All four sites show the same directional pattern: visible speeds (red) are lower "
         "than not-visible speeds (blue) throughout. The effect is largest at Site 4 "
-        "(High Street, Soberton), where the median difference is +2.2 mph, and smallest "
-        "at Site 3 (Station Road, Brockbridge) at +1.4 mph. "
+        "(High Street, Soberton), where the median difference is +1.6 mph, and smallest "
+        "at Site 3 (Station Road, Brockbridge) at +1.3 mph. "
         "Sites 3 and 4 show speeds generally at or below the 30 mph limit, while "
         "Sites 1 and 2 (Church Road, Newtown) have higher baseline speeds."
     )
@@ -416,8 +416,8 @@ with tab_analysis:
         st.plotly_chart(fig5, use_container_width=True)
         st.caption(
             "Maximum speeds are more dispersed than averages and contain more readings "
-            "above the 30 mph limit. Across all sites, 51% of visible-direction readings "
-            "have a maximum speed above 30 mph, compared to 68% for not-visible — a "
+            "above the 30 mph limit. Across all sites, 53% of visible-direction readings "
+            "have a maximum speed above 30 mph, compared to 70% for not-visible — a "
             "17 percentage point difference. The SID therefore appears to reduce peak "
             "speeding as well as average speeds, with the not-visible (right) distribution "
             "showing a heavier tail above the speed limit."
