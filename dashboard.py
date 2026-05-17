@@ -426,7 +426,7 @@ with tab_analysis:
     # ── Section 6: Maximum speed time series ────────────────────────────────
     st.header("6. Maximum Speed Over Time")
     st.caption(
-        "Per site: highest speed recorded by either direction in each rolling 1-hour window. "
+        "Per site: highest speed recorded by any vehicle on each day. "
         "Line breaks indicate gaps between deployments. Green dashed = 30 mph limit."
     )
 
@@ -437,20 +437,18 @@ with tab_analysis:
     )
 
     for row, site in enumerate(selected_sites, start=1):
-        ds = d[d["Location"] == site].sort_values("Date")
-        # Combine directions: max speed at each timestamp across both directions
-        site_max = ds.groupby("Date")["Maximum speed"].max().sort_index()
-        # Rolling 1-hour maximum
-        rolling = site_max.rolling("1h", min_periods=1).max()
-        # Reindex to a uniform 30-min grid so deployment gaps become NaN (line breaks)
-        idx = pd.date_range(rolling.index.min().floor("30min"),
-                            rolling.index.max().ceil("30min"), freq="30min")
-        rolling = rolling.reindex(idx)
+        ds = d[d["Location"] == site].copy()
+        ds["Day"] = ds["Date"].dt.normalize()
+        # Daily maximum across both directions
+        daily_max = ds.groupby("Day")["Maximum speed"].max().sort_index()
+        # Reindex to a continuous daily grid so deployment gaps become NaN (line breaks)
+        idx = pd.date_range(daily_max.index.min(), daily_max.index.max(), freq="D")
+        daily_max = daily_max.reindex(idx)
         fig6.add_trace(go.Scatter(
-            x=rolling.index, y=rolling.values,
+            x=daily_max.index, y=daily_max.values,
             mode="lines",
             line=dict(color=COLOUR_DIFF, width=1.5),
-            name="Rolling 1-hr max speed", showlegend=(row == 1),
+            name="Daily max speed", showlegend=(row == 1),
         ), row=row, col=1)
         fig6.add_hline(
             y=SPEED_LIMIT, line=dict(color="green", dash="dash", width=1),
@@ -466,10 +464,10 @@ with tab_analysis:
     fig6.update_yaxes(title_text="Max speed (mph)")
     st.plotly_chart(fig6, use_container_width=True)
     st.caption(
-        "Each point shows the highest speed recorded by any vehicle across both directions "
-        "in the previous hour. Line breaks are periods when the SID was not deployed at "
-        "this site. Spikes above the line reflect individual fast vehicles; the baseline "
-        "level shows the typical worst-case speed at each location."
+        "Each point is the single highest speed recorded at that site on that day, "
+        "across both directions. Line breaks are periods when the SID was not deployed. "
+        "Peaks reflect individual fast vehicles; the overall level shows how "
+        "frequently high speeds occur at each location."
     )
 
 
