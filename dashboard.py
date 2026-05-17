@@ -11,6 +11,8 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 from scipy.stats import wilcoxon, binomtest, mannwhitneyu
 from statsmodels.stats.diagnostic import acorr_ljungbox
+from pathlib import Path
+from io import StringIO
 
 st.set_page_config(
     page_title="Soberton SID Analysis",
@@ -20,7 +22,7 @@ st.set_page_config(
 
 CAMPAIGN_END = pd.Timestamp("2025-08-07")
 
-MASTER_CSV = "inputs/master.csv"
+MASTER_CSV = str(Path(__file__).parent / "inputs" / "master.csv")
 SPEED_LIMIT = 30
 COLOUR_VISIBLE = "#d62728"      # red
 COLOUR_NOT_VISIBLE = "#1f77b4"  # blue
@@ -157,13 +159,6 @@ def build_timeline(master_path: str) -> pd.DataFrame:
 
 st.title("🚦 Soberton Parish Council — Speed Indicator Device Analysis")
 
-st.info(
-    "**Data coverage: 6 March 2025 – 7 August 2025** (Soberton SID campaign period).  \n"
-    "Data collected after this date is excluded pending confirmation of device deployment "
-    "locations. This dashboard will be updated as further data is verified.",
-    icon="ℹ️",
-)
-
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 data_path = MASTER_CSV
 
@@ -206,7 +201,7 @@ if d.empty:
 # ── Build combined 30-min paired df for section 1 & 2 ───────────────────────
 @st.cache_data
 def build_combined(df_filtered_json: str) -> pd.DataFrame:
-    d2 = pd.read_json(df_filtered_json)
+    d2 = pd.read_json(StringIO(df_filtered_json))
     d2["Date"] = pd.to_datetime(d2["Date"])
     # Average across sites so each timestamp has a single value per direction
     agg_in  = d2[d2["Direction"] == 1].groupby("Date")["Average speed"].mean()
@@ -223,7 +218,9 @@ def build_combined(df_filtered_json: str) -> pd.DataFrame:
 
 combined = build_combined(d.to_json())
 
-tab_analysis, tab_timeline = st.tabs(["Speed Analysis", "Deployment Timeline"])
+tab_analysis, tab_timeline, tab_stats, tab_appendix = st.tabs(
+    ["Speed Analysis", "Deployment Timeline", "Statistical Tests", "Technical Appendix"]
+)
 
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 1 — Speed Analysis
@@ -253,6 +250,14 @@ with tab_analysis:
         height=400, margin=dict(t=40),
     )
     st.plotly_chart(fig1, use_container_width=True)
+    st.caption(
+        "The red (speed visible) series sits consistently below the blue (speed not visible) "
+        "series throughout the campaign, suggesting a persistent speed-reducing effect when "
+        "drivers can see the SID. "
+        "Across all sites and dates, the median average speed when the SID is visible is "
+        "25.0 mph, compared to 26.5 mph when not visible — a difference of 1.5 mph. "
+        "Gaps in the series reflect periods between site deployments."
+    )
 
     # ── Section 2: Difference time series ───────────────────────────────────
     st.header("2. Difference in Average Speed by Direction (Time Series)")
@@ -270,6 +275,14 @@ with tab_analysis:
         height=350, margin=dict(t=40),
     )
     st.plotly_chart(fig2, use_container_width=True)
+    st.caption(
+        "Points above the zero line indicate 30-minute intervals where drivers travelling "
+        "away from the SID (not visible) were faster than those approaching it (visible). "
+        "Across the full campaign, 71% of paired intervals show a positive difference, "
+        "with a median of +1.41 mph — consistent with the SID causing drivers to slow down "
+        "when they can see it. The effect is present throughout the campaign period with no "
+        "clear seasonal trend."
+    )
 
     # ── Section 3: Per-site profiles ────────────────────────────────────────
     st.header("3. Site-Level Average Speed Profiles")
@@ -303,6 +316,14 @@ with tab_analysis:
     )
     fig3.update_yaxes(title_text="Avg speed (mph)")
     st.plotly_chart(fig3, use_container_width=True)
+    st.caption(
+        "All four sites show the same directional pattern: visible speeds (red) are lower "
+        "than not-visible speeds (blue) throughout. The effect is largest at Site 4 "
+        "(High Street, Soberton), where the median difference is +2.2 mph, and smallest "
+        "at Site 3 (Station Road, Brockbridge) at +1.4 mph. "
+        "Sites 3 and 4 show speeds generally at or below the 30 mph limit, while "
+        "Sites 1 and 2 (Church Road, Newtown) have higher baseline speeds."
+    )
 
     # ── Section 4: Average speed distributions ───────────────────────────────
     st.header("4. Distributions of Average Speed and Directional Differences")
@@ -352,6 +373,13 @@ with tab_analysis:
         fig4.update_yaxes(title_text="Frequency")
         fig4.update_layout(height=350, title_text=label, margin=dict(t=80))
         st.plotly_chart(fig4, use_container_width=True)
+        st.caption(
+            "The visible speed distribution (left) is shifted left relative to the "
+            "not-visible distribution (centre) at this site, reflecting lower speeds when "
+            "drivers can see the SID. The difference histogram (right) is skewed positive, "
+            "confirming that not-visible speeds exceed visible speeds in the majority of "
+            "paired 30-minute intervals."
+        )
 
     # ── Section 5: Maximum speed distributions ───────────────────────────────
     st.header("5. Distributions of Maximum Speed by Direction")
@@ -386,169 +414,218 @@ with tab_analysis:
         fig5.update_yaxes(title_text="Frequency")
         fig5.update_layout(height=350, title_text=label, margin=dict(t=80))
         st.plotly_chart(fig5, use_container_width=True)
+        st.caption(
+            "Maximum speeds are more dispersed than averages and contain more readings "
+            "above the 30 mph limit. Across all sites, 51% of visible-direction readings "
+            "have a maximum speed above 30 mph, compared to 68% for not-visible — a "
+            "17 percentage point difference. The SID therefore appears to reduce peak "
+            "speeding as well as average speeds, with the not-visible (right) distribution "
+            "showing a heavier tail above the speed limit."
+        )
 
-    # ── Section 6: Statistical tables ────────────────────────────────────────
-    st.header("6. Statistical Summary")
 
-    st.subheader("Average Speed Difference (Wilcoxon & Sign Tests)")
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 2 — Deployment Timeline (moved before Statistical Tests)
+# ════════════════════════════════════════════════════════════════════════════
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 3 — Statistical Tests
+# ════════════════════════════════════════════════════════════════════════════
+with tab_stats:
+    st.header("Statistical Summary")
+    st.caption(
+        "Results apply to the selected sites and date range. "
+        "See the Technical Appendix tab for full methodology and equations."
+    )
+
+    st.subheader("Average Speed — Directional Difference (Wilcoxon & Sign Tests)")
+    st.caption(
+        "Paired comparison: each 30-minute interval where both directions were recorded. "
+        "Positive median difference means drivers travel faster when the SID is not visible."
+    )
     avg_rows = []
     for site in selected_sites:
         res = paired_stats(d[d["Location"] == site])
         if res:
             avg_rows.append({
                 "Site": SITE_LABELS.get(site, site),
-                "Median diff (mph)": f"{res['median']:.2f}",
+                "n (paired intervals)": res["n"],
+                "Median difference (mph)": f"{res['median']:+.2f}",
                 "Wilcoxon p": fmt_p(res["wilcoxon_p"]),
                 "Sign test p": fmt_p(res["sign_p"]),
-                "n": res["n"],
             })
     if avg_rows:
         st.dataframe(pd.DataFrame(avg_rows), use_container_width=True, hide_index=True)
+    else:
+        st.info("No paired data available for selected filters.")
 
-    st.subheader("Maximum Speed Difference (Mann–Whitney U Test)")
+    st.subheader("Maximum Speed — Directional Difference (Mann–Whitney U Test)")
+    st.caption(
+        "Independent samples comparison of maximum speeds by direction. "
+        "CLE (Common Language Effect size): probability that a randomly chosen "
+        "not-visible reading exceeds a randomly chosen visible reading."
+    )
     max_rows = []
     for site in selected_sites:
         res = max_speed_stats(d[d["Location"] == site])
         if res:
             max_rows.append({
                 "Site": SITE_LABELS.get(site, site),
-                "N visible": res["n_vis"],
-                "N not visible": res["n_not"],
+                "N (visible)": res["n_vis"],
+                "N (not visible)": res["n_not"],
                 "Median visible (mph)": f"{res['med_vis']:.0f}",
                 "Median not visible (mph)": f"{res['med_not']:.0f}",
-                "Diff (not–vis)": f"+{res['diff']:.0f}" if res["diff"] >= 0 else f"{res['diff']:.0f}",
+                "Difference (mph)": f"{res['diff']:+.0f}",
                 "Mann–Whitney p": fmt_p(res["p"]),
                 "CLE": f"{res['cle']:.3f}",
             })
     if max_rows:
         st.dataframe(pd.DataFrame(max_rows), use_container_width=True, hide_index=True)
-
-    # ── Section 7: Data summary ───────────────────────────────────────────────
-    st.header("7. Data Summary")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total records", f"{len(d):,}")
-    col2.metric("Date range", f"{d['Date'].min().date()} → {d['Date'].max().date()}")
-    col3.metric("Sites", len(selected_sites))
-
-    with st.expander("Raw data preview"):
-        st.dataframe(d.head(500), use_container_width=True)
+    else:
+        st.info("No data available for selected filters.")
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# TAB 2 — Deployment Timeline
+# TAB 3 — Deployment Timeline
 # ════════════════════════════════════════════════════════════════════════════
 with tab_timeline:
     st.header("Deployment Timeline")
     st.caption(
-        "Each bar shows a continuous period when a site had active readings. "
-        "All data within the campaign period is assigned via the verified deployment map. "
-        "Overlapping bars across sites indicate two devices active simultaneously."
-    )
-
-    timeline_df = build_timeline(data_path)
-
-    SITE_COLOURS = {
-        "Site1": "#1f77b4", "Site2": "#ff7f0e", "Site3": "#2ca02c",
-        "Site4": "#d62728", "Site5": "#9467bd", "Site6": "#8c564b",
-        "Site7": "#e377c2", "Site8": "#7f7f7f", "Site9": "#bcbd22",
-    }
-    SOURCE_PATTERN = {"Deployment map": "", "Filename": "/"}
-
-    fig_tl = go.Figure()
-
-    for _, row in timeline_df.iterrows():
-        site = row["Site"]
-        colour = SITE_COLOURS.get(site, "#888888")
-        opacity = 0.85 if row["Source"] == "Deployment map" else 0.5
-        duration_days = (row["End"] - row["Start"]).days
-
-        fig_tl.add_trace(go.Bar(
-            x=[duration_days],
-            y=[row["Site Label"]],
-            base=[row["Start"].timestamp() * 1000],
-            orientation="h",
-            marker=dict(
-                color=colour,
-                opacity=opacity,
-                line=dict(color="white", width=1),
-            ),
-            name=f"{site} ({row['Source']})",
-            legendgroup=site,
-            showlegend=False,
-            hovertemplate=(
-                f"<b>{row['Site Label']}</b><br>"
-                f"Start: {row['Start'].date()}<br>"
-                f"End: {row['End'].date()}<br>"
-                f"Duration: {duration_days} days<br>"
-                f"Source: {row['Source']}"
-                "<extra></extra>"
-            ),
-        ))
-
-    # Legend entries — one per site
-    for site, colour in SITE_COLOURS.items():
-        if site in timeline_df["Site"].values:
-            fig_tl.add_trace(go.Bar(
-                x=[0], y=[""], base=[0],
-                orientation="h",
-                marker=dict(color=colour, opacity=0.7),
-                name=SITE_LABELS.get(site, site),
-                legendgroup=site,
-                showlegend=True,
-            ))
-
-    # Campaign end marker
-    fig_tl.add_vline(
-        x=CAMPAIGN_END.timestamp() * 1000,
-        line=dict(color="black", dash="dash", width=1.5),
-        annotation_text="Campaign period ends",
-        annotation_position="top right",
-        annotation_font_size=11,
-    )
-
-    # Convert x-axis to date display
-    all_starts = timeline_df["Start"].tolist()
-    all_ends   = timeline_df["End"].tolist()
-    x_min = min(all_starts)
-    x_max = max(all_ends)
-
-    tick_dates = pd.date_range(
-        x_min.replace(day=1),
-        (x_max + pd.offsets.MonthBegin(1)).replace(day=1),
-        freq="MS",
-    )
-    fig_tl.update_layout(
-        barmode="overlay",
-        height=max(400, 60 * len(timeline_df["Site Label"].unique()) + 120),
-        xaxis=dict(
-            tickmode="array",
-            tickvals=[d.timestamp() * 1000 for d in tick_dates],
-            ticktext=[d.strftime("%b %Y") for d in tick_dates],
-            tickangle=45,
-            title="Date",
-            range=[x_min.timestamp() * 1000, x_max.timestamp() * 1000],
-        ),
-        yaxis=dict(title="Site", autorange="reversed"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, title="Site"),
-        margin=dict(t=80, l=220),
-    )
-
-    st.plotly_chart(fig_tl, use_container_width=True)
-
-    # ── Audit table ───────────────────────────────────────────────────────────
-    st.subheader("Deployment Blocks — Detail Table")
-    st.caption(
-        "Each row is one continuous deployment period. "
+        "Each bar shows a continuous period when a site had active readings, "
+        "derived from the verified deployment map. "
         "Where two sites overlap in date, both devices were active simultaneously."
     )
 
-    display_df = timeline_df[["Site Label", "Start", "End", "Source"]].copy()
-    display_df["Start"] = display_df["Start"].dt.date
-    display_df["End"]   = display_df["End"].dt.date
-    display_df["Duration (days)"] = (
-        pd.to_datetime(display_df["End"]) - pd.to_datetime(display_df["Start"])
-    ).dt.days
-    display_df = display_df.rename(columns={"Site Label": "Site"})
-    display_df = display_df.sort_values("Start").reset_index(drop=True)
+    timeline_df = build_timeline(MASTER_CSV)
+    timeline_df["Duration (days)"] = (timeline_df["End"] - timeline_df["Start"]).dt.days
 
+    fig_tl = px.timeline(
+        timeline_df,
+        x_start="Start",
+        x_end="End",
+        y="Site Label",
+        color="Site Label",
+        hover_data={"Duration (days)": True, "Start": "|%d %b %Y", "End": "|%d %b %Y",
+                    "Site Label": False},
+        labels={"Site Label": "Site"},
+        color_discrete_sequence=px.colors.qualitative.Plotly,
+    )
+    fig_tl.update_yaxes(autorange="reversed", title="")
+    fig_tl.update_xaxes(title="Date")
+    fig_tl.update_layout(
+        height=max(350, 70 * timeline_df["Site Label"].nunique() + 100),
+        legend=dict(title="Site", orientation="h", yanchor="bottom", y=1.02),
+        margin=dict(t=60, l=10),
+    )
+    st.plotly_chart(fig_tl, use_container_width=True)
+
+    st.subheader("Deployment Blocks — Detail")
+    display_df = timeline_df[["Site Label", "Start", "End", "Duration (days)"]].copy()
+    display_df["Start"] = display_df["Start"].dt.strftime("%d %b %Y")
+    display_df["End"]   = display_df["End"].dt.strftime("%d %b %Y")
+    display_df = display_df.rename(columns={"Site Label": "Site"}).reset_index(drop=True)
     st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 4 — Technical Appendix
+# ════════════════════════════════════════════════════════════════════════════
+with tab_appendix:
+    st.header("Technical Appendix")
+
+    # ── Study design ─────────────────────────────────────────────────────────
+    st.subheader("Study Design")
+    st.markdown("""
+A Speed Indicator Device (SID) records a reading every **30 minutes**, logging the
+average speed and maximum speed of all vehicles detected, separated by direction of travel.
+
+**Direction 1 — SID visible:** vehicles approaching from the front, able to see the speed
+display. These drivers receive real-time feedback on their speed.
+
+**Direction 2 — SID not visible:** vehicles approaching from the rear, unable to see the
+display. These readings serve as a control group, capturing background traffic behaviour
+uninfluenced by the device.
+
+The primary question is whether the SID causes a measurable reduction in average speed,
+evidenced by Direction 1 speeds being lower than Direction 2 speeds at the same site and time.
+    """)
+
+    # ── Average speed test ────────────────────────────────────────────────────
+    st.subheader("Test 1 — Average Speed Difference (Wilcoxon Signed-Rank Test)")
+    st.markdown("""
+For each 30-minute interval where both directions were recorded, the paired difference
+is computed:
+    """)
+    st.latex(r"d_i = \bar{v}^{\,\text{not visible}}_i - \bar{v}^{\,\text{visible}}_i")
+    st.markdown("""
+The null hypothesis is that the population median difference is zero
+($H_0: \\widetilde{d} = 0$). The **Wilcoxon signed-rank test** ranks the absolute
+differences and tests whether positive and negative ranks are balanced:
+    """)
+    st.latex(r"W^+ = \sum_{i\,:\,d_i > 0} R_i")
+    st.markdown("""
+where $R_i$ is the rank of $|d_i|$ among all non-zero differences.
+The test statistic $W^+$ is compared against its null distribution. The implementation
+uses the *pratt* zero-method (zero differences are included in ranking but excluded from
+the test statistic) and a normal approximation (*mode="approx"*).
+
+A continuity check for serial autocorrelation is performed using the **Ljung–Box test**
+on the paired difference series. Autocorrelation inflates the effective sample size;
+where significant autocorrelation is detected results should be interpreted with caution.
+    """)
+
+    st.subheader("Test 1b — Sign Test")
+    st.markdown("""
+As a robust companion to the Wilcoxon test, the **sign test** considers only the
+direction (sign) of each paired difference, discarding magnitude. Under $H_0$ the
+number of positive differences $S^+$ follows a binomial distribution:
+    """)
+    st.latex(r"S^+ \sim \mathrm{Binomial}\!\left(n,\, \tfrac{1}{2}\right)")
+    st.markdown("""
+where $n$ is the number of non-zero differences. A two-sided p-value is computed.
+The sign test is less powerful than the Wilcoxon test but makes no assumption about
+the symmetry of the difference distribution.
+    """)
+
+    # ── Maximum speed test ────────────────────────────────────────────────────
+    st.subheader("Test 2 — Maximum Speed Difference (Mann–Whitney U Test)")
+    st.markdown("""
+Maximum speed readings from Direction 1 and Direction 2 are **independent** samples
+(a maximum speed cannot be meaningfully paired across directions for the same interval).
+The **Mann–Whitney U test** is used:
+    """)
+    st.latex(
+        r"U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1"
+    )
+    st.markdown("""
+where $n_1$, $n_2$ are the sample sizes and $R_1$ is the sum of ranks for Direction 1
+in the combined ranking. The test statistic $U$ is:
+    """)
+    st.latex(r"U = \min(U_1,\, U_2)")
+    st.markdown(r"""
+The **Common Language Effect size (CLE)** — also called the probability of superiority —
+estimates the probability that a randomly drawn not-visible maximum speed exceeds a
+randomly drawn visible maximum speed:
+    """)
+    st.latex(
+        r"\widehat{\theta} = \frac{U_2}{n_1 n_2}"
+    )
+    st.markdown(r"""
+$\hat{\theta} = 0.5$ indicates no effect; $\hat{\theta} > 0.5$ indicates that
+not-visible speeds tend to be higher (consistent with the SID having a slowing effect
+when visible).
+    """)
+
+    # ── Data provenance ───────────────────────────────────────────────────────
+    st.subheader("Data Provenance")
+    st.markdown("""
+Raw data was exported from SpeedViewer software in semicolon-delimited CSV format.
+Device deployment dates were verified against the software's campaign log.
+
+Data covers **6 March – 7 August 2025** (Sites 1–4). Data collected after 7 August 2025
+is excluded: post-campaign download files are memory dumps containing the full recording
+history of the device, and without confirmed installation/removal dates per site the
+readings cannot be reliably assigned to a location.
+
+All statistical tests are two-sided. Significance threshold: *p* < 0.05.
+    """)
