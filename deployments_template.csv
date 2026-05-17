@@ -1,0 +1,11 @@
+source_file,campaign,period_start,period_end,site_number,notes
+multiple_1.csv + multiple_2.csv,1.0,2025-03-06,2025-03-20,1,Site 1 — Church Rd Newtown (1 of 2)
+multiple_1.csv + multiple_2.csv,2.0,2025-03-21,2025-04-03,2,Site 2 — Church Rd Newtown (2 of 2)
+multiple_1.csv + multiple_2.csv,3.0,2025-04-04,2025-04-17,3,Site 3 — Station Rd Brockbridge
+multiple_1.csv + multiple_2.csv,4.0,2025-04-18,2025-05-01,2,Site 2 — Church Rd Newtown (2 of 2)
+multiple_1.csv + multiple_2.csv,5.0,2025-05-02,2025-05-14,1,Site 1 — Church Rd Newtown (1 of 2)
+multiple_1.csv + multiple_2.csv,6.0,2025-05-15,2025-05-21,2,Site 2 — Church Rd Newtown (2 of 2)
+multiple_1.csv + multiple_2.csv,7.0,2025-05-22,2025-06-12,3,Site 3 — Station Rd Brockbridge
+multiple_1.csv + multiple_2.csv,8.0,2025-06-13,2025-06-26,4,Site 4 — High St Soberton
+multiple_1.csv + multiple_2.csv,9.0,2025-06-27,2025-07-07,1,Site 1 — Church Rd Newtown (1 of 2)
+multiple_2.csv only,11.0,2025-07-26,2025-08-07,3,Site 3 — soberton site 3 = Station Rd Brockbridge
