@@ -423,6 +423,65 @@ with tab_analysis:
             "showing a heavier tail above the speed limit."
         )
 
+    # ── Section 6: Maximum speed time series ────────────────────────────────
+    st.header("6. Maximum Speed Over Time")
+    st.caption(
+        "Per site: each point is the maximum speed recorded in a 30-minute interval. "
+        "Solid lines show the 7-day rolling median. "
+        "Red = SID visible (approaching); Blue = SID not visible (departing); "
+        "Green dashed = 30 mph limit."
+    )
+
+    fig6 = make_subplots(
+        rows=n_sites, cols=1, shared_xaxes=True,
+        subplot_titles=[SITE_LABELS.get(s, s) for s in selected_sites],
+        vertical_spacing=0.06,
+    )
+
+    for row, site in enumerate(selected_sites, start=1):
+        ds = d[d["Location"] == site].sort_values("Date")
+        for direction, colour, label in [
+            (1, COLOUR_VISIBLE, "Max speed visible – approach from front"),
+            (2, COLOUR_NOT_VISIBLE, "Max speed not visible – approach from rear"),
+        ]:
+            ds_dir = (
+                ds[ds["Direction"] == direction]
+                .set_index("Date")["Maximum speed"]
+                .dropna()
+                .sort_index()
+            )
+            rolling = ds_dir.rolling("7D").median()
+            fig6.add_trace(go.Scatter(
+                x=ds_dir.index, y=ds_dir.values,
+                mode="markers", marker=dict(color=colour, size=2, opacity=0.2),
+                name=label, legendgroup=label, showlegend=(row == 1),
+            ), row=row, col=1)
+            fig6.add_trace(go.Scatter(
+                x=rolling.index, y=rolling.values,
+                mode="lines", line=dict(color=colour, width=2),
+                legendgroup=label, showlegend=False,
+            ), row=row, col=1)
+        fig6.add_hline(
+            y=SPEED_LIMIT, line=dict(color="green", dash="dash", width=1),
+            row=row, col=1,
+        )
+
+    fig6.update_layout(
+        height=300 * n_sites,
+        legend=dict(orientation="h", yanchor="bottom", y=1.01),
+        margin=dict(t=60),
+    )
+    fig6.update_yaxes(title_text="Max speed (mph)")
+    st.plotly_chart(fig6, use_container_width=True)
+    st.caption(
+        "Individual 30-minute maximum speeds are noisy — a single fast vehicle can set the "
+        "reading for a whole half-hour. The rolling median lines cut through that noise to "
+        "show the underlying trend. At all sites the not-visible direction (blue) sits "
+        "persistently above the visible direction (red), consistent with the SID reducing "
+        "peak speeds as well as average speeds. Periods where both lines rise or fall "
+        "together reflect changes in background traffic rather than a change in SID effect."
+    )
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 2 — Deployment Timeline (moved before Statistical Tests)
