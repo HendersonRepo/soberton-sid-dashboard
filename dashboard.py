@@ -325,8 +325,8 @@ with tab_analysis:
     st.caption(
         "All four sites show the same directional pattern: visible speeds (red) are lower "
         "than not-visible speeds (blue) throughout. The effect is largest at Site 3 "
-        "(Station Road, Brockbridge), where the median difference is +1.7 mph, and smallest "
-        "at Site 2 (Church Road, Newtown, 2 of 2) at +1.1 mph. "
+        "(Station Road, Brockbridge), where the median difference is +1.8 mph, and smallest "
+        "at Site 2 (Church Road, Newtown, 2 of 2) at +1.2 mph. "
         "Sites 3 and 4 show speeds generally at or below the 30 mph limit, while "
         "Sites 1 and 2 (Church Road, Newtown) have higher baseline speeds."
     )
