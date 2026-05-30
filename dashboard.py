@@ -228,7 +228,7 @@ tab_analysis, tab_timeline, tab_stats, tab_appendix = st.tabs(
 with tab_analysis:
 
     st.info(
-        "**Data quality note:** three deployment-period location corrections were applied "
+        "**Data quality note:** four deployment-period location corrections were applied "
         "to the source data following speed-profile analysis. See the "
         "**Technical Appendix** tab → *Data Corrections* for full details."
     )
@@ -326,7 +326,7 @@ with tab_analysis:
         "All four sites show the same directional pattern: visible speeds (red) are lower "
         "than not-visible speeds (blue) throughout. The effect is largest at Site 3 "
         "(Station Road, Brockbridge), where the median difference is +1.8 mph, and smallest "
-        "at Site 2 (Church Road, Newtown, 2 of 2) at +1.2 mph. "
+        "at Site 2 (Church Road, Newtown, 2 of 2) at +1.1 mph. "
         "Sites 3 and 4 show speeds generally at or below the 30 mph limit, while "
         "Sites 1 and 2 (Church Road, Newtown) have higher baseline speeds."
     )
@@ -686,13 +686,13 @@ All statistical tests are two-sided. Significance threshold: *p* < 0.05.
     # ── Data corrections ─────────────────────────────────────────────────────
     st.subheader("Data Corrections")
     st.markdown("""
-Three deployment periods were found to carry incorrect site labels in the SpeedViewer
-software. In each case the device was downloaded and the file named after the site where
-the operator was standing at the time of download, but the speed data inside reflected a
-different location. Corrections were identified by comparing the speed distribution of
-each period against the established profiles for all four sites using Kolmogorov–Smirnov
-statistics, mean absolute error across the full percentile grid, and threshold exceedance
-rates (proportion of readings above 40, 50, and 60 mph).
+Four deployment-period corrections were applied to the source data. In each case the
+SpeedViewer software labelled a download file after the site where the operator was
+standing at the time of download (a cumulative memory dump), but the speed data inside
+reflected a different location. Corrections were identified by comparing the speed
+distribution of each period against the established profiles for all four sites using
+Kolmogorov–Smirnov statistics, mean absolute error across the full percentile grid, and
+threshold exceedance rates (proportion of readings above 40, 50, and 60 mph).
 
 ---
 
@@ -716,23 +716,35 @@ consistent with the device not having moved between those campaigns.
 *Corrected to:* Site 3 — Station Rd, Brockbridge
 
 Average speed medians of Dir 1: 23.2 mph, Dir 2: 25.3 mph matched Station Rd, not
-Church Rd. The next confirmed Church Rd deployment (P10, 15–28 Feb 2026) recorded
-Dir 1: 28.0 mph — a 4.8 mph difference in the same direction at the same nominal site
-just 17 days later, which is not credible as seasonal or traffic variation.
+Church Rd. The next Church Rd period (Feb 2026) recorded Dir 1: 28.0 mph — a 4.8 mph
+difference in the same direction at the same nominal site just 17 days later, which is
+not credible as seasonal or traffic variation.
 
 ---
 
-**Correction 3 — Period P7 (8 Nov 2025 – 17 Jan 2026)**
+**Correction 3 — Period P7 (8 Nov 2025 – 17 Jan 2026, three sub-periods)**
 
-*Original label:* Site 3 — Station Rd, Brockbridge
-*Corrected to:* Site 2 — Church Rd, Newtown (2 of 2)
+The Nov–Jan block carries a single SpeedViewer label ("soberton site 2", downloaded
+Jan 2 2026) but speed-profile analysis shows it contains three distinct sub-periods at
+different locations:
 
-This correction was identified from the maximum speed profile rather than average speed
-alone. Average speeds (Dir 1: 25.2 mph, Dir 2: 26.5 mph) fell between the Station Rd and
-Church Rd profiles and did not resolve the ambiguity. However, the upper tail of the
-maximum speed distribution (readings above 30 mph) clearly matched Church Rd: 1.3% of
-intervals recorded a maximum speed above 50 mph and 0.3% above 60 mph, compared to 0%
-for all other Station Rd periods and ~3% / 0.5% for Church Rd periods. KS statistic and
-MAE comparisons of the upper tail placed P7 closest to Site 2. Per-direction analysis
-also favoured Site 2 (Dir 2 KS = 0.288 vs Site 1 Dir 2 KS = 0.342).
+*P7-D (8 Nov – 5 Dec 2025)*
+Original label: Site 3 — Station Rd, Brockbridge → **Corrected to: Site 4 — High St, Soberton**
+Average speed median 24.3 mph; 0% of maximum-speed readings above 50 mph.
+KS statistic vs Site 4: 0.090 (MAE 0.37 mph) — closer than Site 3 (KS 0.104) and far from
+Church Rd (KS > 0.52).
+
+*P7-E (6 Dec 2025 – 3 Jan 2026)*
+Original label: Site 3 — Station Rd, Brockbridge → **Corrected to: Site 2 — Church Rd, Newtown (2 of 2)**
+Average speed median 27.6 mph; 2.9% of maximum-speed readings above 50 mph.
+KS statistic vs Site 1: 0.051 (MAE 0.18 mph). A SpeedViewer campaign note records a
+device explicitly placed at Church Rd (southbound) in mid-December 2025, corroborating
+this sub-period. The aggregated upper-tail statistics for the full P7 block were dominated
+by this sub-period, which initially led to the entire block being incorrectly relabelled
+as Site 2.
+
+*P7-F (4 Jan – 17 Jan 2026)*
+Original label: Site 3 — Station Rd, Brockbridge → **Corrected to: Site 4 — High St, Soberton**
+Average speed median 24.4 mph; 0% of maximum-speed readings above 50 mph.
+KS statistic vs Site 4: 0.070 (MAE 0.34 mph) — closest of all four sites.
     """)
