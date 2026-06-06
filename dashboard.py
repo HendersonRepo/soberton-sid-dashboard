@@ -20,7 +20,7 @@ st.set_page_config(
     layout="wide",
 )
 
-CAMPAIGN_END = pd.Timestamp("2026-03-14")
+CAMPAIGN_END = pd.Timestamp("2026-05-05")
 
 MASTER_CSV = str(Path(__file__).parent / "inputs" / "master.csv")
 SPEED_LIMIT = 30
@@ -227,12 +227,6 @@ tab_analysis, tab_timeline, tab_stats, tab_appendix = st.tabs(
 # ════════════════════════════════════════════════════════════════════════════
 with tab_analysis:
 
-    st.info(
-        "**Data quality note:** four deployment-period location corrections were applied "
-        "to the source data following speed-profile analysis. See the "
-        "**Technical Appendix** tab → *Data Corrections* for full details."
-    )
-
     # ── Section 1: Time series ───────────────────────────────────────────────
     st.header("1. Time Series of Average Speed by Direction")
     st.caption("All selected sites combined. Red = speed visible; Blue = speed not visible.")
@@ -261,7 +255,7 @@ with tab_analysis:
         "series throughout the campaign, suggesting a persistent speed-reducing effect when "
         "drivers can see the SID. "
         "Across all sites and dates, the median average speed when the SID is visible is "
-        "25.3 mph, compared to 26.8 mph when not visible — a difference of 1.4 mph. "
+        "25.7 mph, compared to 27.3 mph when not visible — a difference of 1.6 mph. "
         "Gaps in the series reflect periods between site deployments."
     )
 
@@ -285,7 +279,7 @@ with tab_analysis:
         "Points above the zero line indicate 30-minute intervals where drivers travelling "
         "away from the SID (not visible) were faster than those approaching it (visible). "
         "Across all deployments, 71% of paired intervals show a positive difference, "
-        "with a median of +1.37 mph — consistent with the SID causing drivers to slow down "
+        "with a median of +1.38 mph — consistent with the SID causing drivers to slow down "
         "when they can see it. The effect is present throughout all deployment periods with no "
         "clear seasonal trend."
     )
@@ -325,8 +319,9 @@ with tab_analysis:
     st.caption(
         "All four sites show the same directional pattern: visible speeds (red) are lower "
         "than not-visible speeds (blue) throughout. The effect is largest at Site 3 "
-        "(Station Road, Brockbridge), where the median difference is +1.8 mph, and smallest "
-        "at Site 2 (Church Road, Newtown, 2 of 2) at +1.1 mph. "
+        "(Station Road, Brockbridge) and Site 4 (High St, Soberton), where the median "
+        "pairwise difference is +1.5 mph, and smallest at Site 2 (Church Road, Newtown, "
+        "2 of 2) at +1.2 mph. "
         "Sites 3 and 4 show speeds generally at or below the 30 mph limit, while "
         "Sites 1 and 2 (Church Road, Newtown) have higher baseline speeds."
     )
@@ -422,7 +417,7 @@ with tab_analysis:
         st.plotly_chart(fig5, use_container_width=True)
         st.caption(
             "Maximum speeds are more dispersed than averages and contain more readings "
-            "above the 30 mph limit. Across all sites, 51% of visible-direction readings "
+            "above the 30 mph limit. Across all sites, 52% of visible-direction readings "
             "have a maximum speed above 30 mph, compared to 68% for not-visible — a "
             "16 percentage point difference. The SID therefore appears to reduce peak "
             "speeding as well as average speeds, with the not-visible (right) distribution "
@@ -675,7 +670,7 @@ when visible).
 Raw data was exported from SpeedViewer software in semicolon-delimited CSV format.
 Device deployment dates were verified against the software's campaign log.
 
-Data covers **6 March 2025 – 14 March 2026** across Sites 1–4. Post-campaign download
+Data covers **6 March 2025 – 5 May 2026** across Sites 1–4. Post-campaign download
 files are cumulative memory dumps from the device; deployment periods were reconstructed
 by cross-referencing SpeedViewer campaign records with speed-profile analysis
 (see *Data Corrections* below).
@@ -686,7 +681,7 @@ All statistical tests are two-sided. Significance threshold: *p* < 0.05.
     # ── Data corrections ─────────────────────────────────────────────────────
     st.subheader("Data Corrections")
     st.markdown("""
-Four deployment-period corrections were applied to the source data. In each case the
+Five deployment-period corrections were applied to the source data. In each case the
 SpeedViewer software labelled a download file after the site where the operator was
 standing at the time of download (a cumulative memory dump), but the speed data inside
 reflected a different location. Corrections were identified by comparing the speed
@@ -699,14 +694,16 @@ threshold exceedance rates (proportion of readings above 40, 50, and 60 mph).
 **Correction 1 — Campaign C4 (18 Apr – 1 May 2025)**
 
 *Original label:* Site 2 — Church Rd, Newtown (2 of 2)
-*Corrected to:* Site 3 — Station Rd, Brockbridge
+*Corrected to:* Site 4 — High St, Soberton
 
-Average speed medians during C4 were Dir 1: 22.6 mph, Dir 2: 24.6 mph — matching the
-Station Rd profile (typical 22–25 mph) and not the Church Rd profile (typical 27–29 mph).
-The immediately preceding and following Church Rd periods (C2 and C6) show 26.8 and
-27.5 mph respectively; a 4–5 mph drop for a single two-week period is implausible as
-natural variation. C4 data originates from the same source files as C3 (Station Rd),
-consistent with the device not having moved between those campaigns.
+Average speed medians during C4 were Dir 1: 22.6 mph, Dir 2: 24.6 mph — clearly not
+the Church Rd profile (typical 27–29 mph). The immediately preceding and following
+Church Rd periods (C2 and C6) show 27.5 and 28.0 mph respectively; a 4–5 mph drop for
+a single two-week period is implausible as natural variation. The deployment timeline
+shows a consistent four-site rotation (Church Rd 1 → Church Rd 2 → Station Rd → High St)
+throughout the campaign period; C4 following C3 (Station Rd) places it at High St in
+that sequence. KS statistic vs Site 4: 0.123 (MAE 0.75 mph) — computed against all other
+Site 4 periods excluding C4 itself, to avoid circularity.
 
 ---
 
@@ -731,13 +728,13 @@ different locations:
 *P7-D (8 Nov – 5 Dec 2025)*
 Original label: Site 3 — Station Rd, Brockbridge → **Corrected to: Site 4 — High St, Soberton**
 Average speed median 24.3 mph; 0% of maximum-speed readings above 50 mph.
-KS statistic vs Site 4: 0.090 (MAE 0.37 mph) — closer than Site 3 (KS 0.104) and far from
+KS statistic vs Site 4: 0.156 (MAE 0.89 mph) — closer than Site 3 (KS 0.233) and far from
 Church Rd (KS > 0.52).
 
 *P7-E (6 Dec 2025 – 3 Jan 2026)*
 Original label: Site 3 — Station Rd, Brockbridge → **Corrected to: Site 2 — Church Rd, Newtown (2 of 2)**
 Average speed median 27.6 mph; 2.9% of maximum-speed readings above 50 mph.
-KS statistic vs Site 1: 0.051 (MAE 0.18 mph). A SpeedViewer campaign note records a
+KS statistic vs Site 2: 0.080 (MAE 0.36 mph). A SpeedViewer campaign note records a
 device explicitly placed at Church Rd (southbound) in mid-December 2025, corroborating
 this sub-period. The aggregated upper-tail statistics for the full P7 block were dominated
 by this sub-period, which initially led to the entire block being incorrectly relabelled
@@ -746,5 +743,30 @@ as Site 2.
 *P7-F (4 Jan – 17 Jan 2026)*
 Original label: Site 3 — Station Rd, Brockbridge → **Corrected to: Site 4 — High St, Soberton**
 Average speed median 24.4 mph; 0% of maximum-speed readings above 50 mph.
-KS statistic vs Site 4: 0.070 (MAE 0.34 mph) — closest of all four sites.
+KS statistic vs Site 4: 0.140 (MAE 0.87 mph) — closest of all four sites.
+
+---
+
+**Correction 4 — 17 Jan 2026 (single day, 66 readings)**
+
+*Original label:* Site 2 — Church Rd, Newtown (2 of 2)
+*Corrected to:* Site 4 — High St, Soberton
+
+This single-day block sits immediately adjacent to P7-F (Site 4, Jan 4–17) and was
+downloaded separately in a later SpeedViewer session labelled as Church Rd southbound.
+Average speed median 24.7 mph; 0% of readings above 40 mph. KS statistic vs Site 4: 0.204
+(MAE 0.87 mph) — a clear Site 4 profile; KS vs Church Rd (Site 1/2) exceeds 0.50.
+
+---
+
+**Note — Campaign 10 label assignment (8–25 Jul 2025)**
+
+SpeedViewer recorded this campaign under the label 'soberton newtown southbound' —
+Church Rd Newtown facing south (Site 2). An initial analysis had tentatively placed this
+period at Site 1 (northbound), but it was subsequently assigned to Site 2 to match the
+SpeedViewer campaign note. The two Church Rd directions record very similar speed profiles
+(KS distance between the reference periods: 0.107); statistical discrimination is
+inconclusive for this period (KS vs Site 1: 0.113, vs Site 2: 0.192). The SpeedViewer
+campaign note is treated as authoritative. Average speed median: 28.7 mph; 0% of readings
+above 50 mph — consistent with the Church Rd profile.
     """)
